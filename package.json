@@ -1,0 +1,46 @@
+{
+  "name": "@mya11yreport/mcp",
+  "version": "1.0.0",
+  "description": "Offline MCP server: axe-core accessibility audits + agentic browser interaction (Playwright) over stdio.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "bin": {
+    "mya11yreport-mcp": "./dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "accessibility",
+    "a11y",
+    "axe-core",
+    "playwright",
+    "wcag"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepack": "tsc"
+  },
+  "dependencies": {
+    "@axe-core/playwright": "^4.13.0",
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "playwright": "^1.61.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.5.3"
+  }
+}
