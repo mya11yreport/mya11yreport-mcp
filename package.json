@@ -2,6 +2,8 @@
   "name": "mya11yreport-mcp",
   "version": "1.0.2",
   "description": "Offline MCP server: axe-core accessibility audits + agentic browser interaction (Playwright) over stdio.",
+  "repository": "https://github.com/mya11yreport/mya11yreport-mcp",
+  "license": "Apache-2.0",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
