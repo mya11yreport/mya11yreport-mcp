@@ -1,5 +1,15 @@
 # MyA11yReport MCP server
 
+> What continuous accessibility monitoring? Check out
+> **[MyA11yReport](https://mya11y.report?utm_source=npm)**
+> MyA11yReport is an automated accessibility scanner that uses AI to filter out false positives and explain genuine WCAG
+> issues in plain English, featuring a centralized dashboard to track active issue counts, severities, and site progress
+> over time.
+> 
+> **[Try it for free today](https://mya11y.report?utm_source=npm)**
+
+## About this MCP
+
 An open-source [Model Context Protocol](https://modelcontextprotocol.io) server
 that gives AI agents real accessibility-auditing abilities. It runs axe-core
 audits and drives a real browser through Playwright (navigate, click, type,
@@ -99,7 +109,9 @@ After a global install or `npm link`:
   "mcp": {
     "mya11y-audit": {
       "type": "local",
-      "command": ["mya11yreport-mcp"],
+      "command": [
+        "mya11yreport-mcp"
+      ],
       "enabled": true
     }
   }
@@ -109,13 +121,20 @@ After a global install or `npm link`:
 Without a global install, use `npx`:
 
 ```json
-"command": ["npx", "-y", "mya11yreport-mcp"]
+"command": [
+  "npx",
+  "-y",
+  "mya11yreport-mcp"
+]
 ```
 
 When running from a local checkout, point at the built entry file directly:
 
 ```json
-"command": ["node", "/path/to/mya11yreport-mcp/dist/index.js"]
+"command": [
+  "node",
+  "/path/to/mya11yreport-mcp/dist/index.js"
+]
 ```
 
 Other MCP clients use the same idea — run the server executable with no
@@ -150,8 +169,8 @@ The typical flow is:
    `page.evaluate` and returns the serialized value (non-serializable or
    `undefined` results come back as `null` with `serializable: false`). Use it
    to read computed styles, geometry or custom element state.
-6. `check_color_contrast` needs **no session and no browser**: pass two colors
-   (hex or `rgb()`/`rgba()`) and optionally `fontSizePx`/`fontWeight`, and it
+6. `check_color_contrast` needs **no session and no browser**: pass two colors (hex or `rgb()`/`rgba()`) and optionally
+   `fontSizePx`/`fontWeight`, and it
    returns the WCAG 2.2 ratio, the AA/AAA grades, and whether the pair counts as
    large text.
 7. `list_images` returns every `<img>` / inline `<svg>` with its accessible name
@@ -181,11 +200,11 @@ the top frame and open shadow roots only. `get_tab_order` uses the same
 
 ## Configuration
 
-| Variable                   | Default                         | Purpose                                 |
-| -------------------------- | ------------------------------- | --------------------------------------- |
-| `MYA11Y_MCP_IDLE_CLOSE_MS` | `300000` (5 min)                | Idle auto-close delay (min 1000)        |
-| `MYA11Y_MCP_LOG_DIR`       | `<cwd>/.mya11yreport-mcp/logs`  | Session log directory                   |
-| `PLAYWRIGHT_HEADLESS`      | `true`                          | Default headless mode (param overrides) |
+| Variable                   | Default                        | Purpose                                 |
+|----------------------------|--------------------------------|-----------------------------------------|
+| `MYA11Y_MCP_IDLE_CLOSE_MS` | `300000` (5 min)               | Idle auto-close delay (min 1000)        |
+| `MYA11Y_MCP_LOG_DIR`       | `<cwd>/.mya11yreport-mcp/logs` | Session log directory                   |
+| `PLAYWRIGHT_HEADLESS`      | `true`                         | Default headless mode (param overrides) |
 
 `headless: false` needs a real display on the host machine.
 
