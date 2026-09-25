@@ -11,6 +11,10 @@ import type { ToolDefinition } from './types.js';
 export interface StructureRegion {
   role: string;
   name: string;
+  /** The aria-label attribute verbatim, or '' when absent. */
+  ariaLabel: string;
+  /** The aria-labelledby attribute (raw id list) verbatim, or '' when absent. */
+  ariaLabelledby: string;
   tagName: string;
   path: string[];
   selector: string;
@@ -19,6 +23,10 @@ export interface StructureRegion {
 export interface StructureHeading {
   level: 1 | 2 | 3 | 4 | 5 | 6;
   text: string;
+  /** The aria-label attribute verbatim, or '' when absent. */
+  ariaLabel: string;
+  /** The aria-labelledby attribute (raw id list) verbatim, or '' when absent. */
+  ariaLabelledby: string;
   tagName: string;
   path: string[];
   selector: string;
@@ -102,6 +110,12 @@ function collectStructure(): PageStructure {
 
   const accessibleName = (element: Element): string =>
     labelOf(element) || (element.textContent?.replace(/\s+/g, ' ').trim() ?? '');
+
+  /** The raw ARIA labelling attributes, reported verbatim alongside the name. */
+  const ariaAttrsOf = (element: Element): { ariaLabel: string; ariaLabelledby: string } => ({
+    ariaLabel: element.getAttribute('aria-label') ?? '',
+    ariaLabelledby: element.getAttribute('aria-labelledby') ?? '',
+  });
 
   const buildPath = (element: Element): string[] => {
     const path: string[] = [];
@@ -212,9 +226,12 @@ function collectStructure(): PageStructure {
 
     const path = buildPath(element);
     landmarkIndex.set(element, regions.length);
+    const aria = ariaAttrsOf(element);
     regions.push({
       role,
       name: labelOf(element),
+      ariaLabel: aria.ariaLabel,
+      ariaLabelledby: aria.ariaLabelledby,
       tagName: element.tagName.toLowerCase(),
       path,
       selector: path.join(' >>> '),
@@ -238,9 +255,12 @@ function collectStructure(): PageStructure {
     seen.add(element);
 
     const path = buildPath(element);
+    const aria = ariaAttrsOf(element);
     headings.push({
       level: level as StructureHeading['level'],
       text: accessibleName(element),
+      ariaLabel: aria.ariaLabel,
+      ariaLabelledby: aria.ariaLabelledby,
       tagName: tag,
       path,
       selector: path.join(' >>> '),
@@ -443,9 +463,10 @@ export const getStructureTool: ToolDefinition<typeof inputSchema> = {
   title: 'Get page structure',
   description:
     'Reads the page structure: landmark regions, headings, ' +
-    'lists (nested) and iframes, each with a shadow-piercing selector. A heading outline grouped ' +
-    'by region with skipped-level and repeated-H1 flags is included when both regions and headings ' +
-    'are returned. Top frame only, open shadow roots only.',
+    'lists (nested) and iframes, each with a shadow-piercing selector. Regions and headings also ' +
+    'carry their raw ariaLabel/ariaLabelledby attributes. A heading outline grouped by region with ' +
+    'skipped-level and repeated-H1 flags is included when both regions and headings are returned. ' +
+    'Top frame only, open shadow roots only.',
   inputSchema,
   tier: 'free',
   handler: async (args, context) => {

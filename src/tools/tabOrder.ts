@@ -15,8 +15,23 @@ export interface TabStop {
   path: string[];
   selector: string;
   tag: string;
+  /**
+   * The accessible name: aria-label, aria-labelledby, an associated <label>,
+   * alt/title/placeholder/value, or the element's own text. '' flags a stop
+   * with no accessible name at all.
+   */
   text: string;
   tabindex: number;
+  /** The aria-label attribute verbatim, or '' when absent. */
+  ariaLabel: string;
+  /** The aria-labelledby attribute (raw id list) verbatim, or '' when absent. */
+  ariaLabelledby: string;
+  /** Which step produced `text`. */
+  nameSource: string;
+  /** True when `text` is non-empty — false flags a stop with no label. */
+  hasLabel: boolean;
+  /** aria-hidden, or (an <img> only) an empty alt that nothing else named — labelling is intentional. */
+  decorative: boolean;
 }
 
 interface TabbableNamespace {
@@ -68,31 +83,141 @@ function collectTabOrder(): TabStop[] {
     return path;
   }
 
-  function labelOf(element: Element): string {
-    const text = element.textContent?.replace(/\s+/g, ' ').trim() ?? '';
-    if (text) return text;
+  /**
+   * The accessible name an element computes to, following the order a screen
+   * reader prefers: aria-label, aria-labelledby, an associated <label> for a
+   * labelable control, then the element's own native alternatives (alt, title,
+   * placeholder, value) and finally its text. Inlined because Playwright
+   * serialises this function into the page.
+   */
+  function accessibleNameOf(element: Element): {
+    ariaLabel: string;
+    ariaLabelledby: string;
+    accessibleName: string;
+    nameSource: string;
+    hasLabel: boolean;
+    decorative: boolean;
+  } {
+    const ariaLabel = element.getAttribute('aria-label') ?? '';
+    const ariaLabelledby = element.getAttribute('aria-labelledby') ?? '';
 
-    if (element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement) {
-      return element.placeholder || element.value || '';
+    let accessibleName = '';
+    let nameSource = 'none';
+
+    const trimmedLabel = ariaLabel.trim();
+    if (trimmedLabel) {
+      accessibleName = trimmedLabel;
+      nameSource = 'aria-label';
+    } else if (ariaLabelledby) {
+      const text = ariaLabelledby
+        .split(/\s+/)
+        .filter(Boolean)
+        .map((id) => document.getElementById(id)?.textContent ?? '')
+        .join(' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+      if (text) {
+        accessibleName = text;
+        nameSource = 'aria-labelledby';
+      }
     }
-    if (element instanceof HTMLSelectElement) {
-      const chosen = element.selectedOptions.item(0);
-      return chosen?.textContent?.replace(/\s+/g, ' ').trim() ?? '';
+
+    // `.labels` exists only on labelable elements; an associated <label> (for=
+    // or wrapping) is the native naming technique that must not read as missing.
+    if (!accessibleName) {
+      const labels = (element as HTMLInputElement).labels;
+      if (labels && labels.length > 0) {
+        const text = Array.from(labels)
+          .map((label) => label.textContent ?? '')
+          .join(' ')
+          .replace(/\s+/g, ' ')
+          .trim();
+        if (text) {
+          accessibleName = text;
+          nameSource = 'label';
+        }
+      }
     }
-    return '';
+
+    if (!accessibleName) {
+      const alt = element.getAttribute('alt');
+      if (alt && alt.trim()) {
+        accessibleName = alt.trim();
+        nameSource = 'alt';
+      }
+    }
+    if (!accessibleName) {
+      const title = element.getAttribute('title');
+      if (title && title.trim()) {
+        accessibleName = title.trim();
+        nameSource = 'title';
+      }
+    }
+    if (!accessibleName) {
+      const placeholder = element.getAttribute('placeholder');
+      if (placeholder && placeholder.trim()) {
+        accessibleName = placeholder.trim();
+        nameSource = 'placeholder';
+      }
+    }
+    if (!accessibleName) {
+      const value = (element as HTMLInputElement).value;
+      if (value && value.trim()) {
+        accessibleName = value.trim();
+        nameSource = 'value';
+      }
+    }
+    if (!accessibleName) {
+      let text = element.textContent?.replace(/\s+/g, ' ').trim() ?? '';
+      if (!text) {
+        // A link or button whose only content is an image or icon takes its
+        // name from that descendant's alt/title/value.
+        const parts: string[] = [];
+        for (const node of element.querySelectorAll('img[alt], area[alt], svg title, input[value]')) {
+          const candidate =
+            node.getAttribute('alt') ?? node.getAttribute('value') ?? node.textContent ?? '';
+          if (candidate.trim()) parts.push(candidate.trim());
+        }
+        text = parts.join(' ').replace(/\s+/g, ' ').trim();
+      }
+      if (text) {
+        accessibleName = text;
+        nameSource = 'text';
+      }
+    }
+
+    const ariaHidden = element.getAttribute('aria-hidden');
+    const ariaHiddenHidden = ariaHidden !== null && ariaHidden !== 'false';
+    const emptyAltDecorative =
+      element.tagName === 'IMG' && element.getAttribute('alt') === '' && nameSource === 'none';
+
+    return {
+      ariaLabel,
+      ariaLabelledby,
+      accessibleName,
+      nameSource,
+      hasLabel: accessibleName.length > 0,
+      decorative: ariaHiddenHidden || emptyAltDecorative,
+    };
   }
 
   return ns
     .tabbable(document.documentElement, { getShadowRoot: true })
     .map((element, position) => {
       const path = buildPath(element);
+      const aria = accessibleNameOf(element);
       return {
         index: position + 1,
         path,
         selector: path.join(' >>> '),
         tag: element.tagName.toLowerCase(),
-        text: labelOf(element),
+        text: aria.accessibleName,
         tabindex: (element as HTMLElement).tabIndex,
+        ariaLabel: aria.ariaLabel,
+        ariaLabelledby: aria.ariaLabelledby,
+        nameSource: aria.nameSource,
+        hasLabel: aria.hasLabel,
+        decorative: aria.decorative,
       };
     });
 }
@@ -125,9 +250,10 @@ export const getTabOrderTool: ToolDefinition<typeof inputSchema> = {
   description:
     'Lists the page\'s tab stops in the order the Tab key reaches them, using the tabbable ' +
     'algorithm: positive tabindex values first (ascending), then ' +
-    'everything else in document order. Each stop reports its position, tag, label, effective ' +
-    'tabindex, shadow-piercing selector and an outOfOrder flag when tabindex is positive. Top frame ' +
-    'only; hidden/disabled/inert elements are excluded.',
+    'everything else in document order. Each stop reports its position, tag, accessible name ' +
+    '(`text`), effective `tabindex`, shadow-piercing selector, the raw `ariaLabel`/`ariaLabelledby` ' +
+    'attributes, the `nameSource` that produced the name, a `hasLabel` flag, and an `outOfOrder` ' +
+    'flag when tabindex is positive. Top frame only; hidden/disabled/inert elements are excluded.',
   inputSchema,
   tier: 'free',
   handler: async (args, context) => {

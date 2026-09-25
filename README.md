@@ -179,10 +179,12 @@ The typical flow is:
    `filter: all | decorative | missing-alt | has-alt`.
 8. `get_structure` returns landmark regions, headings, nested lists and iframes,
    plus a heading outline grouped by region with skipped-level / repeated-H1
-   flags. Narrow with `include: [...]`.
+   flags. Regions and headings also carry their raw `ariaLabel` / `ariaLabelledby`
+   attributes. Narrow with `include: [...]`.
 9. `get_tab_order` returns the Tab order (positive `tabindex` first, then
-   document order) with each stop's tag, label, effective `tabindex`,
-   shadow-piercing selector and an `outOfOrder` flag.
+   document order) with each stop's tag, accessible name (`text`), effective
+   `tabindex`, shadow-piercing selector, raw `ariaLabel` / `ariaLabelledby`,
+   `nameSource`, `hasLabel` and `outOfOrder` flags.
 10. `close_session` when done.
 
 The three review tools (`list_images`, `get_structure`, `get_tab_order`) inspect
