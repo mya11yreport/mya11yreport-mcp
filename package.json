@@ -1,6 +1,6 @@
 {
   "name": "mya11yreport-mcp",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Offline MCP server: axe-core accessibility audits + agentic browser interaction (Playwright) over stdio.",
   "type": "module",
   "main": "./dist/index.js",
