@@ -36,7 +36,7 @@ key and no network service of its own.
 ### From npm (recommended)
 
 ```bash
-npm i -g @mya11yreport/mcp
+npm i -g mya11yreport-mcp
 mya11yreport-mcp install chromium
 ```
 
@@ -49,7 +49,7 @@ tool is used.
 Prefer not to install globally? Use `npx`:
 
 ```bash
-npx -y @mya11yreport/mcp install chromium
+npx -y mya11yreport-mcp install chromium
 ```
 
 To confirm the server starts on your machine:
@@ -109,7 +109,7 @@ After a global install or `npm link`:
 Without a global install, use `npx`:
 
 ```json
-"command": ["npx", "-y", "@mya11yreport/mcp"]
+"command": ["npx", "-y", "mya11yreport-mcp"]
 ```
 
 When running from a local checkout, point at the built entry file directly:

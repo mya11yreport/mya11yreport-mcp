@@ -1,5 +1,5 @@
 {
-  "name": "@mya11yreport/mcp",
+  "name": "mya11yreport-mcp",
   "version": "1.0.0",
   "description": "Offline MCP server: axe-core accessibility audits + agentic browser interaction (Playwright) over stdio.",
   "type": "module",
