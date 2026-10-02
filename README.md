@@ -1,6 +1,6 @@
 # MyA11yReport MCP server
 
-> What continuous accessibility monitoring? Check out
+> Want continuous accessibility monitoring? Check out
 > **[MyA11yReport](https://mya11y.report?utm_source=npm)**
 > MyA11yReport is an automated accessibility scanner that uses AI to filter out false positives and explain genuine WCAG
 > issues in plain English, featuring a centralized dashboard to track active issue counts, severities, and site progress
